@@ -4,6 +4,9 @@ import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import util.NavigationUtil;
+
+import java.io.IOException;
 
 public class DashboardFormController {
 
@@ -32,7 +35,13 @@ public class DashboardFormController {
 
     @FXML
     void btnIssueOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+
+        try {
+            NavigationUtil.loadScene("issueBook_view.fxml", btnIssue);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @FXML
