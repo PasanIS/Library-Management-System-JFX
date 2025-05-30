@@ -16,4 +16,8 @@ public class Book {
     private String isbn;
     private int copies; //-- For check-available copies
 
+    @Override
+    public String toString() {
+        return title;  // Show only book title in ComboBox
+    }
 }

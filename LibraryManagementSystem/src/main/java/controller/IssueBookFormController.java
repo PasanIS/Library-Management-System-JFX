@@ -5,6 +5,7 @@ import com.jfoenix.controls.JFXComboBox;
 import dao.BookDAO;
 import dao.BorrowDAO;
 import dao.MemberDAO;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -15,7 +16,9 @@ import javafx.scene.control.Label;
 import javafx.util.Duration;
 import model.Book;
 import model.Member;
+import util.NavigationUtil;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -66,12 +69,20 @@ public class IssueBookFormController {
 
     @FXML
     void btnBackOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+
+        try {
+            NavigationUtil.loadScene("dashboard_view.fxml", btnBack);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
     void btnClearOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+        cboxSelectMember.getSelectionModel().clearSelection();
+        cboxCategory.getSelectionModel().clearSelection();
+        cboxBook.getItems().clear(); //------ Clear books when category is reset
+        datePickerIssueDate.setValue(LocalDate.now()); //------Set to default date
     }
 
     @FXML
@@ -110,7 +121,7 @@ public class IssueBookFormController {
     }
 
     //----------Initialization------------
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize() {
         startClock();
         loadCategories();
         loadMembers();
@@ -128,10 +139,10 @@ public class IssueBookFormController {
     private void startClock() {
         Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
             LocalDateTime now = LocalDateTime.now();
-            lblCurrentTime.setText(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            lblCurrentTime.setText(now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         }), new KeyFrame(Duration.seconds(1)));
 
-        clock.setCycleCount(Timeline.INDEFINITE);
+        clock.setCycleCount(Animation.INDEFINITE);
         clock.play();
     }
 

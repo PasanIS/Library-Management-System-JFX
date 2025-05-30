@@ -14,4 +14,9 @@ public class Member {
     private String contact;
     private String nic;
 
+    @Override
+    public String toString() {
+        return name;  // Show only member name in ComboBox
+    }
+
 }

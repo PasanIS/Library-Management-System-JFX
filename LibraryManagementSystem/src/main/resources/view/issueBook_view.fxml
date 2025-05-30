@@ -11,24 +11,23 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.IssueBookFormController">
     <ImageView fitHeight="400.0" fitWidth="600.0" opacity="0.6" pickOnBounds="true" preserveRatio="true">
-      <image>
-         <Image url="@../imgs/issueBook.png" />
-      </image></ImageView>
+        <Image url="@../imgs/issueBook.png" />
+    </ImageView>
     <Label layoutX="29.0" layoutY="26.0" text="ISSUE BOOKS">
         <font>
           <Font name="Maiandra GD" size="36.0" />
         </font>
     </Label>
-    <JFXComboBox fx:id="cboxSelectMember" editable="true" layoutX="205.0" layoutY="123.0" prefHeight="26.0" prefWidth="166.0" promptText="Select Member By ID" unFocusColor="BLACK" />
-    <JFXComboBox fx:id="cboxCategory" editable="true" layoutX="205.0" layoutY="167.0" prefHeight="26.0" prefWidth="166.0" promptText="Category" unFocusColor="BLACK" />
-    <JFXComboBox fx:id="cboxBook" editable="true" layoutX="390.0" layoutY="167.0" prefHeight="26.0" prefWidth="166.0" promptText="Book" unFocusColor="BLACK" />
+    <JFXComboBox fx:id="cboxSelectMember" layoutX="205.0" layoutY="123.0" prefHeight="26.0" prefWidth="166.0" promptText="Select Member By Name" unFocusColor="BLACK" />
+    <JFXComboBox fx:id="cboxCategory" layoutX="205.0" layoutY="167.0" prefHeight="26.0" prefWidth="166.0" promptText="Category" unFocusColor="BLACK" />
+    <JFXComboBox fx:id="cboxBook" layoutX="390.0" layoutY="167.0" prefHeight="26.0" prefWidth="166.0" promptText="Book" unFocusColor="BLACK" />
     <Label fx:id="lblSelectBook" layoutX="51.0" layoutY="170.0" text="Select Book">
         <font>
           <Font name="System Bold" size="15.0" />
         </font>
     </Label>
     <DatePicker fx:id="datePickerIssueDate" layoutX="205.0" layoutY="212.0" prefHeight="26.0" prefWidth="166.0" promptText="MM / DD / YYYY" />
-    <Label fx:id="lblCurrentTime" layoutX="388.0" layoutY="212.0" prefHeight="26.0" prefWidth="166.0" />
+    <Label fx:id="lblCurrentTime" layoutX="388.0" layoutY="212.0" prefHeight="26.0" prefWidth="166.0" style="-fx-font-weight: bold; -fx-text-fill: #000000; -fx-font-size: large;" text="Time will appear here . . ." />
     <Label fx:id="lblIssueDate" layoutX="51.0" layoutY="215.0" text="Issue Date">
         <font>
           <Font name="System Bold" size="15.0" />
