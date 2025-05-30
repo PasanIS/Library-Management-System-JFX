@@ -1,6 +1,9 @@
 package controller;
 
 import com.jfoenix.controls.JFXButton;
+import dao.BookDAO;
+import dao.BorrowDAO;
+import dao.MemberDAO;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

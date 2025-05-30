@@ -2,7 +2,7 @@ package model;
 
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Setter@Getter
 @AllArgsConstructor
@@ -13,6 +13,6 @@ public class Borrow {
     private int borrowId;
     private int memberId;
     private int bookId;
-    private LocalDate issueDate;
+    private LocalDateTime issueDate;
 
 }
