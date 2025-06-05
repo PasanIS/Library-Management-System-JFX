@@ -14,5 +14,7 @@ public class Borrow {
     private int memberId;
     private int bookId;
     private LocalDateTime issueDate;
+    private LocalDateTime returnDate;
+    private Double fine;
 
 }
