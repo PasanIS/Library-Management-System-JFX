@@ -48,12 +48,46 @@ public class BookDAO {
         return books;
     }
 
+    // ----------Get Book By ID-----------
+    public Book getBookById(int bookId) throws SQLException {
+
+        String query = "SELECT * FROM books WHERE book_id = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, bookId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return new Book(
+                            resultSet.getInt("book_id"),
+                            resultSet.getString("title"),
+                            resultSet.getString("author"),
+                            resultSet.getString("category"),
+                            resultSet.getString("isbn"),
+                            resultSet.getInt("copies")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
     // -------Reduce The Copies-----------
     public void reduceCopies(int bookId) throws SQLException {
 
         String query = "UPDATE books SET copies = copies - 1 WHERE book_id = ? AND copies > 0";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, bookId);
+            preparedStatement.executeUpdate();
+        }
+    }
+
+    // -------Increase The Copies-----------
+    public void increaseCopies(int bookId) throws SQLException {
+
+        String sql = "UPDATE books SET copies = copies + 1 WHERE book_id = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, bookId);
             preparedStatement.executeUpdate();
         }

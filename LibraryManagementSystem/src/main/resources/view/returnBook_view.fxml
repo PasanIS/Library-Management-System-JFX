@@ -11,7 +11,6 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
 <AnchorPane prefHeight="444.0" prefWidth="699.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ReturnBookFormController">
    <children>
       <ImageView fitHeight="444.0" fitWidth="699.0" opacity="0.6" pickOnBounds="true" preserveRatio="true">
@@ -37,9 +36,9 @@
       </Label>
       <TableView fx:id="tblBookDetails" layoutX="215.0" layoutY="162.0" prefHeight="94.0" prefWidth="438.0">
         <columns>
-          <TableColumn prefWidth="92.7999267578125" text="Book ID" />
-          <TableColumn prefWidth="184.00006103515625" text="Book" />
-            <TableColumn prefWidth="160.79999389648435" text="Issued Date &amp; Time" />
+          <TableColumn fx:id="colBookId" prefWidth="92.7999267578125" text="Book ID" />
+          <TableColumn fx:id="colTitle" prefWidth="184.00006103515625" text="Book" />
+            <TableColumn fx:id="colIssueDateAndTime" prefWidth="160.79999389648435" text="Issued Date &amp; Time" />
         </columns>
       </TableView>
       <DatePicker fx:id="datePickerReturnDate" layoutX="215.0" layoutY="274.0" prefHeight="26.0" prefWidth="166.0" promptText="MM / DD / YYYY" />

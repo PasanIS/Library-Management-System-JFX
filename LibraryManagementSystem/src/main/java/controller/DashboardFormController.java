@@ -54,7 +54,13 @@ public class DashboardFormController {
 
     @FXML
     void btnReturnOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+
+        try {
+            NavigationUtil.loadScene("returnBook_view.fxml", btnReturn);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @FXML

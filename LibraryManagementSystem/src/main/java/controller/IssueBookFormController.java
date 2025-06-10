@@ -89,12 +89,14 @@ public class IssueBookFormController {
     void btnIssueBookOnAction(ActionEvent event) {
         Book book = cboxBook.getValue();
         Member member = cboxSelectMember.getValue();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDate selectedDate = datePickerIssueDate.getValue();
 
-        if (book == null || member == null) {
-            showAlert(Alert.AlertType.ERROR, "Please select both a book & a member...");
+        if (book == null || member == null || selectedDate == null) {
+            showAlert(Alert.AlertType.ERROR, "Please select both a book, a member & a date...");
             return;
         }
+
+        LocalDateTime issueDateTime = selectedDate.atStartOfDay();
 
         if (book.getCopies() <= 0) {
             showAlert(Alert.AlertType.WARNING, "This book is out of stocks...");
@@ -108,7 +110,7 @@ public class IssueBookFormController {
                 return;
             }
 
-            borrowDAO.issueBook(member.getMemberId(), book.getBookId(), now);
+            borrowDAO.issueBook(member.getMemberId(), book.getBookId(), issueDateTime);
             bookDAO.reduceCopies(book.getBookId());
             showAlert(Alert.AlertType.INFORMATION, "Book issued successfully..!");
 
