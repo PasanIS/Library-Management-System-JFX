@@ -53,6 +53,23 @@ SELECT DISTINCT category FROM books;
 
 select * from borrowings;
 
+Use Library_db;
+
+ALTER TABLE borrowings 
+MODIFY COLUMN return_date datetime;
+
+Desc borrowings;
+
+Desc books;
+
+Select * From books;
+
+Select * From borrowings;
+
+Select * From members;
+
+ALTER TABLE books ADD COLUMN status VARCHAR(20) DEFAULT 'AVAILABLE';
+
 
 
 

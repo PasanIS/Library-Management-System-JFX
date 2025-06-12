@@ -92,4 +92,91 @@ public class BookDAO {
             preparedStatement.executeUpdate();
         }
     }
+
+    // ---------Add Book-----------
+    public static boolean addBook(Book book) {
+
+        String sql = "INSERT INTO books (isbn, title, author, category, copies) VALUES (?, ?, ?, ?, ?)";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, book.getIsbn());
+            preparedStatement.setString(2, book.getTitle());
+            preparedStatement.setString(3, book.getAuthor());
+            preparedStatement.setString(4, book.getCategory());
+            preparedStatement.setInt(5, book.getCopies());
+
+            int rows = preparedStatement.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ---------Get Book By ISBN-----------
+    public Book getBookByIsbn (String isbn) throws SQLException {
+
+        String sql = "SELECT * FROM books WHERE isbn = ? AND status = 'AVAILABLE'";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, isbn);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return new Book(
+                        resultSet.getInt("book_id"),
+                        resultSet.getString("title"),
+                        resultSet.getString("author"),
+                        resultSet.getString("category"),
+                        resultSet.getString("isbn"),
+                        resultSet.getInt("copies")
+                );
+            }
+            return null;
+        }
+    }
+
+    public boolean updateBook(Book book) {
+
+        String sql = "UPDATE books SET title = ?, author = ?, category = ?, copies = ? WHERE isbn = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, book.getTitle());
+            preparedStatement.setString(2, book.getAuthor());
+            preparedStatement.setString(3, book.getCategory());
+            preparedStatement.setInt(4, book.getCopies());
+            preparedStatement.setString(5, book.getIsbn());
+
+            int rows = preparedStatement.executeUpdate();
+            return rows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ---------Delete Book-----------
+    public boolean removeBook(String isbn) {
+
+        String sql = "UPDATE books SET status = 'REMOVED' WHERE isbn = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            System.out.println("Deleting book with ISBN: [" + isbn + "]");
+
+            preparedStatement.setString(1, isbn);
+            int rows = preparedStatement.executeUpdate();
+
+            System.out.println("Rows affected: " + rows);
+
+            return rows > 0;
+
+        } catch (Exception e) {
+
+            System.out.println("Error deleting book: " + e.getMessage());
+
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

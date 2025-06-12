@@ -33,7 +33,12 @@ public class DashboardFormController {
 
     @FXML
     void btnAddOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+
+        try {
+            NavigationUtil.loadScene("addBook_view.fxml", btnAdd);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
