@@ -179,4 +179,66 @@ public class BookDAO {
             return false;
         }
     }
+
+    // --------------Get Suggestions---------------
+    public static List<String> getSuggestions(String type, String input) {
+        List<String> results = new ArrayList<>();
+        String column;
+
+        switch (type.toLowerCase()) {
+            case "isbn": column = "isbn"; break;
+            case "title": column = "title"; break;
+            case "category": column = "category"; break;
+            default: return results;
+        }
+
+        String query = "SELECT DISTINCT " + column + " FROM books WHERE " + column + " LIKE ? LIMIT 10";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, input + "%");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                results.add(resultSet.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
+    // ------------Search Books------------
+    public static Book searchBook(String searchType, String searchText) {
+        Book book = null;
+
+        try (Connection connection = DBConnection.getConnection()) {
+            PreparedStatement preparedStatement;
+
+            if ("ISBN".equals(searchType)) {
+                preparedStatement = connection.prepareStatement("SELECT * FROM books WHERE isbn = ? AND status = 'AVAILABLE'");
+            } else if ("Title".equals(searchType)) {
+                preparedStatement = connection.prepareStatement("SELECT * FROM books WHERE title = ? AND status = 'AVAILABLE'");
+            } else {
+                return null;
+            }
+
+            preparedStatement.setString(1, searchText.trim());
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                book = new Book(
+                        resultSet.getInt("book_id"),
+                        resultSet.getString("title"),
+                        resultSet.getString("author"),
+                        resultSet.getString("category"),
+                        resultSet.getString("isbn"),
+                        resultSet.getInt("copies")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return book;
+    }
 }

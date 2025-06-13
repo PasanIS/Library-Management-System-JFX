@@ -54,7 +54,11 @@ public class DashboardFormController {
 
     @FXML
     void btnRegisterOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+        try {
+            NavigationUtil.loadScene("registerMember_view.fxml", btnRegister);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -70,7 +74,11 @@ public class DashboardFormController {
 
     @FXML
     void btnSearchOnAction(ActionEvent event) {
-        // TODO document why this method is empty
+        try {
+            NavigationUtil.loadScene("searchBook_view.fxml", btnSearch);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
