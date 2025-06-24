@@ -10,11 +10,14 @@ import java.time.LocalDateTime;
 @ToString
 public class Borrow {
 
-    private int borrowId;
-    private int memberId;
-    private int bookId;
+    private String borrowId;
+
+    private Member member;
+    private Book book;
+
     private LocalDateTime issueDate;
     private LocalDateTime returnDate;
+
     private Double fine;
 
 }

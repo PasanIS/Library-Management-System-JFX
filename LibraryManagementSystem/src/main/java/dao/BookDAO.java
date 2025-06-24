@@ -1,6 +1,9 @@
 package dao;
 
+import model.Author;
 import model.Book;
+import model.Category;
+import model.Publisher;
 import util.DBConnection;
 
 import java.sql.*;
@@ -10,85 +13,115 @@ import java.util.List;
 public class BookDAO {
 
     // -------Get All Categories-----------
-    public List<String> getAllCategories() throws SQLException {
-        List<String> categories = new ArrayList<>();
+    public List<Category> getAllCategories() throws SQLException {
+        List<Category> categories = new ArrayList<>();
 
-        String query = "SELECT DISTINCT category FROM books";
+        String query = "SELECT * FROM categories";
         try (Connection connection = DBConnection.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
-                categories.add(resultSet.getString("category"));
+                categories.add(new Category(
+                        resultSet.getString("category_id"),
+                        resultSet.getString("name")
+                ));
             }
         }
         return categories;
     }
 
     // -------Get Books By Category-----------
-    public List<Book> getBooksByCategory(String category) throws SQLException {
+    public List<Book> getBooksByCategory(String categoryId) throws SQLException {
         List<Book> books = new ArrayList<>();
+        String query = "SELECT b.*, a.name AS author_name, c.name AS category_name, p.name AS publisher_name " +
+                "FROM books b " +
+                "JOIN authors a ON b.author_id = a.author_id " +
+                "JOIN categories c ON b.category_id = c.category_id " +
+                "JOIN publishers p ON b.publisher_id = p.publisher_id " +
+                "WHERE b.category_id = ?";
 
-        String query = "SELECT * FROM books WHERE category = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, category);
+            preparedStatement.setString(1, categoryId);
             ResultSet resultSet = preparedStatement.executeQuery();
+
             while (resultSet.next()) {
-                Book book = new Book(
-                        resultSet.getInt("book_id"),
-                        resultSet.getString("title"),
-                        resultSet.getString("author"),
-                        resultSet.getString("category"),
-                        resultSet.getString("isbn"),
-                        resultSet.getInt("copies")
-                );
+                Book book = new Book();
+                book.setBookId(resultSet.getString("book_id"));
+                book.setTitle(resultSet.getString("title"));
+                book.setIsbn(resultSet.getString("isbn"));
+                book.setTotalQty(resultSet.getInt("total_quantity"));
+                book.setAvailableQty(resultSet.getInt("available_quantity"));
+
+                Author author = new Author(resultSet.getString("author_id"), resultSet.getString("author_name"));
+                Category category = new Category(resultSet.getString("category_id"), resultSet.getString("category_name"));
+                Publisher publisher = new Publisher(resultSet.getString("publisher_id"), resultSet.getString("publisher_name"));
+
+                book.setAuthor(author);
+                book.setCategory(category);
+                book.setPublisher(publisher);
+
                 books.add(book);
             }
         }
+
         return books;
     }
 
     // ----------Get Book By ID-----------
-    public Book getBookById(int bookId) throws SQLException {
+    public Book getBookById(String bookId) throws SQLException {
 
-        String query = "SELECT * FROM books WHERE book_id = ?";
+        String query = "SELECT b.*, a.name AS author_name, c.name AS category_name, p.name AS publisher_name " +
+                "FROM books b " +
+                "JOIN authors a ON b.author_id = a.author_id " +
+                "JOIN categories c ON b.category_id = c.category_id " +
+                "JOIN publishers p ON b.publisher_id = p.publisher_id " +
+                "WHERE b.book_id = ?";
+
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setInt(1, bookId);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return new Book(
-                            resultSet.getInt("book_id"),
-                            resultSet.getString("title"),
-                            resultSet.getString("author"),
-                            resultSet.getString("category"),
-                            resultSet.getString("isbn"),
-                            resultSet.getInt("copies")
-                    );
-                }
+            preparedStatement.setString(1, bookId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                Book book = new Book();
+                book.setBookId(resultSet.getString("book_id"));
+                book.setTitle(resultSet.getString("title"));
+                book.setIsbn(resultSet.getString("isbn"));
+                book.setTotalQty(resultSet.getInt("total_quantity"));
+                book.setAvailableQty(resultSet.getInt("available_quantity"));
+
+                Author author = new Author(resultSet.getString("author_id"), resultSet.getString("author_name"));
+                Category category = new Category(resultSet.getString("category_id"), resultSet.getString("category_name"));
+                Publisher publisher = new Publisher(resultSet.getString("publisher_id"), resultSet.getString("publisher_name"));
+
+                book.setAuthor(author);
+                book.setCategory(category);
+                book.setPublisher(publisher);
+
+                return book;
             }
         }
         return null;
     }
 
     // -------Reduce The Copies-----------
-    public void reduceCopies(int bookId) throws SQLException {
+    public void reduceAvailableQty(String bookId) throws SQLException {
 
-        String query = "UPDATE books SET copies = copies - 1 WHERE book_id = ? AND copies > 0";
+        String query = "UPDATE books SET available_quantity = available_quantity - 1 WHERE book_id = ? AND available_quantity > 0";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setInt(1, bookId);
+            preparedStatement.setString(1, bookId);
             preparedStatement.executeUpdate();
         }
     }
 
     // -------Increase The Copies-----------
-    public void increaseCopies(int bookId) throws SQLException {
+    public void increaseAvailableQty(String bookId) throws SQLException {
 
-        String sql = "UPDATE books SET copies = copies + 1 WHERE book_id = ?";
+        String sql = "UPDATE books SET available_quantity = available_quantity + 1 WHERE book_id = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, bookId);
+            preparedStatement.setString(1, bookId);
             preparedStatement.executeUpdate();
         }
     }
@@ -96,14 +129,18 @@ public class BookDAO {
     // ---------Add Book-----------
     public static boolean addBook(Book book) {
 
-        String sql = "INSERT INTO books (isbn, title, author, category, copies) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO books (book_id, title, isbn, author_id, category_id, publisher_id, total_quantity, available_quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, book.getIsbn());
+
+            preparedStatement.setString(1, book.getBookId());
             preparedStatement.setString(2, book.getTitle());
-            preparedStatement.setString(3, book.getAuthor());
-            preparedStatement.setString(4, book.getCategory());
-            preparedStatement.setInt(5, book.getCopies());
+            preparedStatement.setString(3, book.getIsbn());
+            preparedStatement.setString(4, book.getAuthor().getAuthorId());
+            preparedStatement.setString(5, book.getCategory().getCategoryId());
+            preparedStatement.setString(6, book.getPublisher().getPublisherId());
+            preparedStatement.setInt(7, book.getTotalQty());
+            preparedStatement.setInt(8, book.getAvailableQty());
 
             int rows = preparedStatement.executeUpdate();
             return rows > 0;
@@ -113,39 +150,42 @@ public class BookDAO {
         }
     }
 
-    // ---------Get Book By ISBN-----------
-    public Book getBookByIsbn (String isbn) throws SQLException {
-
-        String sql = "SELECT * FROM books WHERE isbn = ? AND status = 'AVAILABLE'";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, isbn);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return new Book(
-                        resultSet.getInt("book_id"),
-                        resultSet.getString("title"),
-                        resultSet.getString("author"),
-                        resultSet.getString("category"),
-                        resultSet.getString("isbn"),
-                        resultSet.getInt("copies")
-                );
-            }
-            return null;
-        }
-    }
+//    // ---------Get Book By ISBN-----------
+//    public Book getBookByIsbn (String isbn) throws SQLException {
+//
+//        String sql = "SELECT * FROM books WHERE isbn = ? AND status = 'AVAILABLE'";
+//        try (Connection connection = DBConnection.getConnection();
+//             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+//            preparedStatement.setString(1, isbn);
+//            ResultSet resultSet = preparedStatement.executeQuery();
+//            if (resultSet.next()) {
+//                return new Book(
+//                        resultSet.getInt("book_id"),
+//                        resultSet.getString("title"),
+//                        resultSet.getString("author"),
+//                        resultSet.getString("category"),
+//                        resultSet.getString("isbn"),
+//                        resultSet.getInt("copies")
+//                );
+//            }
+//            return null;
+//        }
+//    }
 
     public boolean updateBook(Book book) {
 
-        String sql = "UPDATE books SET title = ?, author = ?, category = ?, copies = ? WHERE isbn = ?";
+        String sql = "UPDATE books SET title = ?, isbn = ?, author_id = ?, category_id = ?, publisher_id = ?, total_quantity = ?, available_quantity = ? WHERE book_id = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setString(1, book.getTitle());
-            preparedStatement.setString(2, book.getAuthor());
-            preparedStatement.setString(3, book.getCategory());
-            preparedStatement.setInt(4, book.getCopies());
-            preparedStatement.setString(5, book.getIsbn());
+            preparedStatement.setString(2, book.getIsbn());
+            preparedStatement.setString(3, book.getAuthor().getAuthorId());
+            preparedStatement.setString(4, book.getCategory().getCategoryId());
+            preparedStatement.setString(5, book.getPublisher().getPublisherId());
+            preparedStatement.setInt(6, book.getTotalQty());
+            preparedStatement.setInt(7, book.getAvailableQty());
+            preparedStatement.setString(8, book.getBookId());
 
             int rows = preparedStatement.executeUpdate();
             return rows > 0;
@@ -156,85 +196,93 @@ public class BookDAO {
     }
 
     // ---------Delete Book-----------
-    public boolean removeBook(String isbn) {
+    public boolean removeBook(String bookId) {
 
-        String sql = "UPDATE books SET status = 'REMOVED' WHERE isbn = ?";
+        String sql = "DELETE FROM books WHERE book_id = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            System.out.println("Deleting book with ISBN: [" + isbn + "]");
-
-            preparedStatement.setString(1, isbn);
+            preparedStatement.setString(1, bookId);
             int rows = preparedStatement.executeUpdate();
-
-            System.out.println("Rows affected: " + rows);
-
             return rows > 0;
 
         } catch (Exception e) {
-
-            System.out.println("Error deleting book: " + e.getMessage());
-
             e.printStackTrace();
             return false;
         }
     }
 
-    // --------------Get Suggestions---------------
-    public static List<String> getSuggestions(String type, String input) {
-        List<String> results = new ArrayList<>();
-        String column;
-
-        switch (type.toLowerCase()) {
-            case "isbn": column = "isbn"; break;
-            case "title": column = "title"; break;
-            case "category": column = "category"; break;
-            default: return results;
-        }
-
-        String query = "SELECT DISTINCT " + column + " FROM books WHERE " + column + " LIKE ? LIMIT 10";
-
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, input + "%");
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                results.add(resultSet.getString(1));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return results;
-    }
+//    // --------------Get Suggestions---------------
+//    public static List<String> getSuggestions(String type, String input) {
+//        List<String> results = new ArrayList<>();
+//        String column;
+//
+//        switch (type.toLowerCase()) {
+//            case "isbn": column = "isbn"; break;
+//            case "title": column = "title"; break;
+//            case "category": column = "category"; break;
+//            default: return results;
+//        }
+//
+//        String query = "SELECT DISTINCT " + column + " FROM books WHERE " + column + " LIKE ? LIMIT 10";
+//
+//        try (Connection connection = DBConnection.getConnection();
+//             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+//
+//            preparedStatement.setString(1, input + "%");
+//            ResultSet resultSet = preparedStatement.executeQuery();
+//            while (resultSet.next()) {
+//                results.add(resultSet.getString(1));
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//        return results;
+//    }
 
     // ------------Search Books------------
     public static Book searchBook(String searchType, String searchText) {
         Book book = null;
+        String sql = null;
 
-        try (Connection connection = DBConnection.getConnection()) {
-            PreparedStatement preparedStatement;
+        if ("ISBN".equalsIgnoreCase(searchType)) {
+            sql = "SELECT b.*, a.name AS author_name, c.name AS category_name, p.name AS publisher_name " +
+                    "FROM books b " +
+                    "JOIN authors a ON b.author_id = a.author_id " +
+                    "JOIN categories c ON b.category_id = c.category_id " +
+                    "JOIN publishers p ON b.publisher_id = p.publisher_id " +
+                    "WHERE b.isbn = ?";
+        } else if ("Title".equalsIgnoreCase(searchType)) {
+            sql = "SELECT b.*, a.name AS author_name, c.name AS category_name, p.name AS publisher_name " +
+                    "FROM books b " +
+                    "JOIN authors a ON b.author_id = a.author_id " +
+                    "JOIN categories c ON b.category_id = c.category_id " +
+                    "JOIN publishers p ON b.publisher_id = p.publisher_id " +
+                    "WHERE b.title = ?";
+        }
 
-            if ("ISBN".equals(searchType)) {
-                preparedStatement = connection.prepareStatement("SELECT * FROM books WHERE isbn = ? AND status = 'AVAILABLE'");
-            } else if ("Title".equals(searchType)) {
-                preparedStatement = connection.prepareStatement("SELECT * FROM books WHERE title = ? AND status = 'AVAILABLE'");
-            } else {
-                return null;
-            }
+        if (sql == null) return null;
 
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, searchText.trim());
             ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                book = new Book(
-                        resultSet.getInt("book_id"),
-                        resultSet.getString("title"),
-                        resultSet.getString("author"),
-                        resultSet.getString("category"),
-                        resultSet.getString("isbn"),
-                        resultSet.getInt("copies")
-                );
+                book = new Book();
+                book.setBookId(resultSet.getString("book_id"));
+                book.setTitle(resultSet.getString("title"));
+                book.setIsbn(resultSet.getString("isbn"));
+                book.setTotalQty(resultSet.getInt("total_quantity"));
+                book.setAvailableQty(resultSet.getInt("available_quantity"));
+
+                Author author = new Author(resultSet.getString("author_id"), resultSet.getString("author_name"));
+                Category category = new Category(resultSet.getString("category_id"), resultSet.getString("category_name"));
+                Publisher publisher = new Publisher(resultSet.getString("publisher_id"), resultSet.getString("publisher_name"));
+
+                book.setAuthor(author);
+                book.setCategory(category);
+                book.setPublisher(publisher);
             }
         } catch (SQLException e) {
             e.printStackTrace();

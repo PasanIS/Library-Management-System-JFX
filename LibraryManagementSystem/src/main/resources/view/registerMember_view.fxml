@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane prefHeight="555.0" prefWidth="816.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.RegisterMemberFormController">
+   <children>
+      <ImageView fitHeight="555.0" fitWidth="816.0" opacity="0.6" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../imgs/addMember.png" />
+         </image>
+      </ImageView>
+      <Label layoutX="41.0" layoutY="40.0" text="MEMBER REGISTRATION">
+         <font>
+            <Font name="Maiandra GD" size="36.0" />
+         </font>
+      </Label>
+      <GridPane layoutX="65.0" layoutY="178.0" prefHeight="222.0" prefWidth="492.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label fx:id="lblMemberID" text="Member ID:">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label fx:id="lblName" text="Name:" GridPane.rowIndex="1">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label fx:id="lblContact" text="Contact:" GridPane.rowIndex="2">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <Label fx:id="lblNIC" text="NIC (National Identity Card):" GridPane.rowIndex="3">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <JFXTextField fx:id="txtMemberID" GridPane.columnIndex="1">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXTextField>
+            <JFXTextField fx:id="txtName" GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXTextField>
+            <JFXTextField fx:id="txtContact" GridPane.columnIndex="1" GridPane.rowIndex="2">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXTextField>
+            <JFXTextField fx:id="txtNIC" GridPane.columnIndex="1" GridPane.rowIndex="3">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXTextField>
+         </children>
+      </GridPane>
+      <TextField fx:id="txtSearch" layoutX="311.0" layoutY="137.0" prefHeight="26.0" prefWidth="246.0" promptText="Search member here . . .">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </TextField>
+      <JFXButton fx:id="btnSearch" buttonType="RAISED" layoutX="611.0" layoutY="137.0" onAction="#btnSearchOnAction" prefHeight="30.0" prefWidth="150.0" style="-fx-background-color: #007BFF;" text="Search" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </JFXButton>
+      <GridPane layoutX="612.0" layoutY="177.0" prefHeight="222.0" prefWidth="149.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <JFXButton fx:id="btnRegister" buttonType="RAISED" onAction="#btnRegisterOnAction" prefHeight="38.0" prefWidth="182.0" style="-fx-background-color: #28A745;" text="Register" textAlignment="CENTER" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXButton>
+            <JFXButton fx:id="btnRemove" buttonType="RAISED" onAction="#btnRemoveOnAction" prefHeight="38.0" prefWidth="158.0" style="-fx-background-color: #DC3545;" text="Remove Member" textAlignment="CENTER" textFill="WHITE" GridPane.rowIndex="1">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXButton>
+            <JFXButton fx:id="btnUpdate" buttonType="RAISED" onAction="#btnUpdateOnAction" prefHeight="38.0" prefWidth="173.0" style="-fx-background-color: #FD7E14;" text="Update Details" textAlignment="CENTER" textFill="WHITE" GridPane.rowIndex="2">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXButton>
+            <JFXButton fx:id="btnClear" buttonType="RAISED" onAction="#btnClearOnAction" prefHeight="38.0" prefWidth="173.0" style="-fx-background-color: #FFC107;" text="Clear" textAlignment="CENTER" textFill="WHITE" GridPane.rowIndex="3">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </JFXButton>
+         </children>
+      </GridPane>
+      <JFXButton fx:id="btnBack" buttonType="RAISED" layoutX="406.0" layoutY="446.0" onAction="#btnBackOnAction" prefHeight="30.0" prefWidth="150.0" style="-fx-background-color: #6C757D;" text="Back" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </JFXButton>
+      <JFXButton fx:id="btnView" buttonType="RAISED" layoutX="611.0" layoutY="446.0" onAction="#btnViewOnAction" prefHeight="30.0" prefWidth="150.0" style="-fx-background-color: #6F42C1;" text="View All Members" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+      </JFXButton>
+   </children>
+</AnchorPane>

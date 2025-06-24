@@ -9,12 +9,16 @@ import lombok.*;
 @ToString
 public class Book {
 
-    private int bookId;
+    private String bookId;
     private String title;
-    private String author;
-    private String category;
     private String isbn;
-    private int copies; //-- For check-available copies
+
+    private Author author;
+    private Category category;
+    private Publisher publisher;
+
+    private int totalQty;
+    private int availableQty;
 
 
     @Override

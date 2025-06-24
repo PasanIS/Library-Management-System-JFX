@@ -206,7 +206,7 @@ public class ReturnBookFormController {
     }
 
     // ------------Load Borrowed Books------------
-    private void loadBorrowedBooks(int memberId) {
+    private void loadBorrowedBooks(String memberId) {
         try {
             borrows.clear();
             borrows.addAll(borrowDAO.getBorrowingsByMember(memberId));

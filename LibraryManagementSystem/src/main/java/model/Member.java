@@ -2,6 +2,9 @@ package model;
 
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -9,10 +12,11 @@ import lombok.*;
 @ToString
 public class Member {
 
-    private int memberId;
+    private String memberId;
     private String name;
-    private String contact;
+    private Contact contact;
     private String nic;
+    private LocalDate registeredDate;
 
     @Override
     public String toString() {
