@@ -3,7 +3,6 @@ package dao;
 import model.Member;
 import util.DBConnection;
 
-import javax.xml.transform.Result;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,17 +14,26 @@ public class MemberDAO {
     public List<Member> getAllMembers() throws SQLException {
         List<Member> members = new ArrayList<>();
 
-        String query = "SELECT * FROM members";
+        String query = "SELECT m.member_id, m.full_name, m.nic, m.registered_date, " +
+                "c.contact, c.email, c.address " +
+                "FROM members m LEFT JOIN contacts c ON m.member_id = c.member_id";
+
         try (Connection connection = DBConnection.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(query);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
             while (resultSet.next()) {
-                Member member = new Member(
-                        resultSet.getString("member_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("contact"),
-                        resultSet.getString("nic")
-                );
+                Member member = new Member();
+                member.setMemberId(resultSet.getString("member_id"));
+                member.setFullName(resultSet.getString("full_name"));
+                member.setNic(resultSet.getString("nic"));
+                member.setRegisteredDate(resultSet.getTimestamp("registered_date").toLocalDateTime().toLocalDate());
+
+                // Optional contact info
+                member.setContact(resultSet.getString("contact"));
+                member.setEmail(resultSet.getString("email"));
+                member.setAddress(resultSet.getString("address"));
+
                 members.add(member);
             }
         }
@@ -34,16 +42,31 @@ public class MemberDAO {
 
     // ---------Add Member-----------
     public static boolean addMember(Member member) {
-        String sql = "INSERT INTO members (name, contact, nic) VALUES (?, ?, ?)";
+        String memberSql = "INSERT INTO members (member_id, full_name, nic, registered_date) VALUES (?, ?, ?, ?)";
+        String contactSql = "INSERT INTO contacts (member_id, contact) VALUES (?, ?)";
 
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (Connection connection = DBConnection.getConnection()) {
+            connection.setAutoCommit(false);
 
-            preparedStatement.setString(1, member.getName());
-            preparedStatement.setString(2, member.getContact());
-            preparedStatement.setString(3, member.getNic());
+            try (PreparedStatement memberStatement = connection.prepareStatement(memberSql);
+                 PreparedStatement contactStatement = connection.prepareStatement(contactSql)) {
 
-            return preparedStatement.executeUpdate() > 0;
+                memberStatement.setString(1, member.getMemberId());
+                memberStatement.setString(2, member.getFullName());
+                memberStatement.setString(3, member.getNic());
+                memberStatement.setTimestamp(4, Timestamp.valueOf(member.getRegisteredDate().atStartOfDay()));
+                memberStatement.executeUpdate();
+
+                contactStatement.setString(1, member.getMemberId());
+                contactStatement.setString(2, member.getContact());
+                contactStatement.executeUpdate();
+
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -52,38 +75,71 @@ public class MemberDAO {
 
     // ---------Search Member-----------
     public static Optional<Member> searchMember(String keyword) {
-        String sql = "SELECT * FROM members WHERE name=? OR nic=?";
+        String sql = "SELECT m.member_id, m.full_name, m.nic, m.registered_date, " +
+                "c.contact, c.email, c.address " +
+                "FROM members m " +
+                "LEFT JOIN contacts c ON m.member_id = c.member_id " +
+                "WHERE m.member_id = ? OR m.full_name = ? OR m.nic = ?";
 
         try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, keyword);
-            preparedStatement.setString(2, keyword);
-            ResultSet resultSet =preparedStatement.executeQuery();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
 
-            if (resultSet.next()) {
-                return Optional.of(new Member(
-                        resultSet.getString("member_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("contact"),
-                        resultSet.getString("nic")
-                ));
+            ps.setString(1, keyword);
+            ps.setString(2, keyword);
+            ps.setString(3, keyword);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Member member = new Member(
+                        rs.getString("member_id"),
+                        rs.getString("full_name"),
+                        rs.getString("contact"), // Make sure your Member class has a 'contact' field
+                        rs.getString("nic"),
+                        rs.getTimestamp("registered_date").toLocalDateTime().toLocalDate()
+                );
+
+                // If needed, you can also set email and address like this:
+                // member.setEmail(rs.getString("email"));
+                // member.setAddress(rs.getString("address"));
+
+                return Optional.of(member);
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return Optional.empty();
     }
 
     // --------------Update Member--------------
     public static boolean updateMember(Member member) {
-        String sql = "UPDATE members SET name=?, contact=?, nic=? WHERE name=? OR nic=?";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, member.getName());
-            preparedStatement.setString(2, member.getContact());
-            preparedStatement.setString(3, member.getNic());
-            preparedStatement.setString(4, member.getMemberId());
-            return preparedStatement.executeUpdate() > 0;
+        String memberSql = "UPDATE members SET full_name = ?, nic = ?, registered_date = ? WHERE member_id = ?";
+        String contactSql = "UPDATE contacts SET contact = ? WHERE member_id = ?";
+
+        try (Connection connection = DBConnection.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement memberStmt = connection.prepareStatement(memberSql);
+                 PreparedStatement contactStmt = connection.prepareStatement(contactSql)) {
+
+                memberStmt.setString(1, member.getFullName());
+                memberStmt.setString(2, member.getNic());
+                memberStmt.setTimestamp(3, Timestamp.valueOf(member.getRegisteredDate().atStartOfDay()));
+                memberStmt.setString(4, member.getMemberId());
+                memberStmt.executeUpdate();
+
+                contactStmt.setString(1, member.getContact());
+                contactStmt.setString(2, member.getMemberId());
+                contactStmt.executeUpdate();
+
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -91,12 +147,28 @@ public class MemberDAO {
     }
 
     // -------------Remove Member----------------
-    public static boolean deleteMember(int memberId) {
-        String sql = "DELETE FROM members WHERE name=? OR nic=?";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, memberId);
-            return preparedStatement.executeUpdate() > 0;
+    public static boolean deleteMember(String memberId) {
+        String deleteContactSql = "DELETE FROM contacts WHERE member_id = ?";
+        String deleteMemberSql = "DELETE FROM members WHERE member_id = ?";
+
+        try (Connection connection = DBConnection.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement contactStmt = connection.prepareStatement(deleteContactSql);
+                 PreparedStatement memberStmt = connection.prepareStatement(deleteMemberSql)) {
+
+                contactStmt.setString(1, memberId);
+                contactStmt.executeUpdate();
+
+                memberStmt.setString(1, memberId);
+                memberStmt.executeUpdate();
+
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                e.printStackTrace();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 public class Borrow {
 
     private String borrowId;
+    private String bookId;
+    private String memberId;
 
     private Member member;
     private Book book;
@@ -19,5 +21,14 @@ public class Borrow {
     private LocalDateTime returnDate;
 
     private Double fine;
+
+    public String getBookId() {
+        return book != null ? book.getBookId() : null;
+    }
+
+    public String getBookTitle() {
+        return book != null ? book.getTitle() : null;
+    }
+
 
 }

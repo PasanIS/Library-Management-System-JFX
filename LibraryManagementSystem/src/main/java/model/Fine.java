@@ -2,6 +2,7 @@ package model;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -11,9 +12,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 public class Fine {
-    private String fineId;
-    private Borrow borrow;
+    private Integer fineId;
+    private String borrowId;
     private double fineAmount;
+    private LocalDate calculatedDate;
     private boolean paid;
-    private LocalDateTime paidDate;
+    private LocalDate paidDate;
 }

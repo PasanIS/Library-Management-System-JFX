@@ -8,16 +8,17 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import model.Author;
 import model.Book;
+import model.Category;
+import model.Publisher;
 import util.NavigationUtil;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class AddBookFormController {
-
-    @FXML
-    private JFXTextField txtIsbn;
 
     @FXML
     private JFXButton btnAddBook;
@@ -32,22 +33,10 @@ public class AddBookFormController {
     private JFXButton btnRemoveBook;
 
     @FXML
-    private JFXButton btnSearchBack;
+    private JFXButton btnSearch;
 
     @FXML
     private JFXButton btnUpdateBook;
-
-    @FXML
-    private Label lblAuthor;
-
-    @FXML
-    private Label lblCategory;
-
-    @FXML
-    private Label lblCopies;
-
-    @FXML
-    private Label lblTitle;
 
     @FXML
     private JFXTextField txtAuthor;
@@ -56,7 +45,10 @@ public class AddBookFormController {
     private JFXTextField txtCategory;
 
     @FXML
-    private JFXTextField txtCopies;
+    private JFXTextField txtIsbn;
+
+    @FXML
+    private JFXTextField txtPublisher;
 
     @FXML
     private TextField txtSearch;
@@ -65,41 +57,48 @@ public class AddBookFormController {
     private JFXTextField txtTitle;
 
     @FXML
+    private JFXTextField txtTotalQty;
+
+    @FXML
     void btnAddBookOnAction(ActionEvent event) {
 
         String isbn = txtIsbn.getText();
         String title = txtTitle.getText();
-        String author = txtAuthor.getText();
-        String category = txtCategory.getText();
-        String copiesText = txtCopies.getText();  // keep this as String
+        String authorName = txtAuthor.getText();
+        String categoryName = txtCategory.getText();
+        String totalQty = txtTotalQty.getText();
 
-        if (isbn == null || title == null || author == null || category == null || copiesText == null ||
-                isbn.isEmpty() ||
-                title.isEmpty() ||
-                author.isEmpty() ||
-                category.isEmpty() ||
-                copiesText.isEmpty()) {
+        if (isbn.isEmpty() || title.isEmpty() || authorName.isEmpty() || categoryName.isEmpty() || totalQty.isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "All fields must be filled . . .");
             return;
         }
 
-        int copiesCount;
+        int copies;
         try {
-            copiesCount = Integer.parseInt(copiesText);
+            copies = Integer.parseInt(totalQty);
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Copies must be a valid number . . .");
             return;
         }
 
-        Book book = new Book();
-        book.setIsbn(isbn);
-        book.setTitle(title);
-        book.setAuthor(author);
-        book.setCategory(category);
-        book.setCopies(copiesCount);
-
-        BookDAO bookDAO = new BookDAO();
         try {
+            String bookId = generateId();
+            BookDAO bookDAO = new BookDAO();
+            Author author = bookDAO.getOrCreateAuthorByName(authorName);
+            Category category = bookDAO.getOrCreateCategoryByName(categoryName);
+            Publisher publisher = new BookDAO().getOrCreatePublisherById("P001", "Default Publisher");
+
+
+            Book book = new Book();
+            book.setBookId(bookId);
+            book.setTitle(title);
+            book.setIsbn(isbn);
+            book.setAuthor(author);
+            book.setCategory(category);
+            book.setPublisher(publisher);
+            book.setTotalQty(copies);
+            book.setAvailableQty(copies);
+
             boolean added = BookDAO.addBook(book);
             if (added) {
                 showAlert(Alert.AlertType.CONFIRMATION, "Book added successfully . . .");
@@ -130,24 +129,24 @@ public class AddBookFormController {
     @FXML
     void btnRemoveBookOnAction(ActionEvent event) {
         String isbn = txtIsbn.getText();
-        if (isbn == null || isbn.isEmpty()) {
+        if (isbn.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Enter ISBN to remove . . .");
             return;
         }
 
-        BookDAO bookDAO = new BookDAO();
+        Book book = BookDAO.searchBook("ISBN", isbn);
+        if (book == null) {
+            showAlert(Alert.AlertType.ERROR, "Book not found . . .");
+            return;
+        }
 
-        try {
-            boolean deleted = bookDAO.removeBook(isbn);
-            if (deleted) {
-                showAlert(Alert.AlertType.CONFIRMATION, "Book removed successfully . . .");
-                clearFields();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Failed to remove book . . .");
-            }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error: " + e.getMessage());
-            e.printStackTrace();
+        BookDAO bookDAO = new BookDAO();
+        boolean deleted = bookDAO.removeBook(book.getBookId());
+        if (deleted) {
+            showAlert(Alert.AlertType.CONFIRMATION, "Book removed successfully . . .");
+            clearFields();
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Failed to remove book . . .");
         }
     }
 
@@ -159,14 +158,13 @@ public class AddBookFormController {
             return;
         }
 
-        BookDAO bookDAO = new BookDAO();
-        Book book = bookDAO.getBookByIsbn(isbn);
+        Book book = BookDAO.searchBook("ISBN", isbn);
         if (book != null) {
             txtIsbn.setText(book.getIsbn());
             txtTitle.setText(book.getTitle());
-            txtAuthor.setText(book.getAuthor());
-            txtCategory.setText(book.getCategory());
-            txtCopies.setText(String.valueOf(book.getCopies()));
+            txtAuthor.setText(book.getAuthor().getName());
+            txtCategory.setText(book.getCategory().getName());
+            txtTotalQty.setText(String.valueOf(book.getTotalQty()));
         } else {
             showAlert(Alert.AlertType.WARNING, "Book not found . . .");
         }
@@ -176,11 +174,11 @@ public class AddBookFormController {
     void btnUpdateBookOnAction(ActionEvent event) {
         String isbn = txtIsbn.getText();
         String title = txtTitle.getText();
-        String author = txtAuthor.getText();
-        String category = txtCategory.getText();
-        String copiesText = txtCopies.getText();
+        String authorName = txtAuthor.getText();
+        String categoryName = txtCategory.getText();
+        String copiesText = txtTotalQty.getText();
 
-        if (isbn.isEmpty() || title.isEmpty() || author.isEmpty() || category.isEmpty() || copiesText.isEmpty()) {
+        if (isbn.isEmpty() || title.isEmpty() || authorName.isEmpty() || categoryName.isEmpty() || copiesText.isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "All fields must be filled . . .");
             return;
         }
@@ -193,15 +191,21 @@ public class AddBookFormController {
             return;
         }
 
-        Book updatedBook = new Book();
-        updatedBook.setIsbn(isbn);
-        updatedBook.setTitle(title);
-        updatedBook.setAuthor(author);
-        updatedBook.setCategory(category);
-        updatedBook.setCopies(copies);
+        Book existingBook = BookDAO.searchBook("ISBN", isbn);
+        if (existingBook == null) {
+            showAlert(Alert.AlertType.WARNING, "Book not found . . .");
+            return;
+        }
+
+        existingBook.setTitle(title);
+        existingBook.setIsbn(isbn);
+        existingBook.setTotalQty(copies);
+        existingBook.setAvailableQty(copies);
+        existingBook.getAuthor().setName(authorName);
+        existingBook.getCategory().setName(categoryName);
 
         BookDAO bookDAO = new BookDAO();
-        boolean updated = bookDAO.updateBook(updatedBook);
+        boolean updated = bookDAO.updateBook(existingBook);
 
         if (updated) {
             showAlert(Alert.AlertType.CONFIRMATION, "Book updated successfully . . .");
@@ -225,8 +229,14 @@ public class AddBookFormController {
         txtTitle.clear();
         txtAuthor.clear();
         txtCategory.clear();
-        txtCopies.clear();
+        txtTotalQty.clear();
+        txtSearch.clear();
+        txtPublisher.clear();
     }
 
+    // ------------Generate ID------------
+    private String generateId() {
+        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
 
 }

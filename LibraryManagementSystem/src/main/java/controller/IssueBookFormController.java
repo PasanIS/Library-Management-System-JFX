@@ -15,16 +15,19 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.util.Duration;
 import model.Book;
+import model.Category;
 import model.Member;
+import util.DBConnection;
 import util.NavigationUtil;
 
 import java.io.IOException;
-import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ResourceBundle;
 
 public class IssueBookFormController {
 
@@ -41,7 +44,7 @@ public class IssueBookFormController {
     private JFXComboBox<Book> cboxBook;
 
     @FXML
-    private JFXComboBox<String> cboxCategory;
+    private JFXComboBox<Category> cboxCategory;
 
     @FXML
     private JFXComboBox<Member> cboxSelectMember;
@@ -62,9 +65,9 @@ public class IssueBookFormController {
     private Label lblSelectMember;
 
     //--------------------------------------------
-    private BookDAO bookDAO = new BookDAO();
-    private MemberDAO memberDAO = new MemberDAO();
-    private BorrowDAO borrowDAO = new BorrowDAO();
+    private final BookDAO bookDAO = new BookDAO();
+    private final MemberDAO memberDAO = new MemberDAO();
+    private final BorrowDAO borrowDAO = new BorrowDAO();
     //--------------------------------------------
 
     @FXML
@@ -92,30 +95,31 @@ public class IssueBookFormController {
         LocalDate selectedDate = datePickerIssueDate.getValue();
 
         if (book == null || member == null || selectedDate == null) {
-            showAlert(Alert.AlertType.ERROR, "Please select both a book, a member & a date...");
+            showAlert(Alert.AlertType.ERROR, "Please select a book, a member, and a date...");
             return;
         }
 
-        LocalDateTime issueDateTime = selectedDate.atStartOfDay();
-
-        if (book.getCopies() <= 0) {
-            showAlert(Alert.AlertType.WARNING, "This book is out of stocks...");
+        if (book.getAvailableQty() <= 0) {
+            showAlert(Alert.AlertType.WARNING, "This book is out of stock...");
             return;
         }
 
         try {
-            boolean alreadyBorrowed = borrowDAO.hasAlreadyBorrowed(member.getMemberId(),book.getBookId());
+            boolean alreadyBorrowed = borrowDAO.hasAlreadyBorrowed(member.getMemberId(), book.getBookId());
             if (alreadyBorrowed) {
                 showAlert(Alert.AlertType.WARNING, "This member has already borrowed this book...");
                 return;
             }
 
-            borrowDAO.issueBook(member.getMemberId(), book.getBookId(), issueDateTime);
-            bookDAO.reduceCopies(book.getBookId());
-            showAlert(Alert.AlertType.INFORMATION, "Book issued successfully..!");
+            // Enforce 2-book borrowing limit
+            borrowDAO.issueBookIfAllowed(member.getMemberId(), book.getBookId(), selectedDate.atStartOfDay());
 
-            //------Refresh the list (to show Updated Copies)
-            loadBooksByCategory(cboxCategory.getValue());
+            bookDAO.reduceAvailableQty(book.getBookId());
+            showAlert(Alert.AlertType.INFORMATION, "Book issued successfully...!");
+            loadBooksByCategory(String.valueOf(cboxCategory.getValue()));
+        } catch (IllegalStateException ise) {
+            // This exception is thrown from issueBookIfAllowed if member has 2 active borrowings
+            showAlert(Alert.AlertType.WARNING, ise.getMessage());
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Database error occurred...");
@@ -124,18 +128,21 @@ public class IssueBookFormController {
 
     //----------Initialization------------
     public void initialize() {
-        startClock();
-        loadCategories();
-        loadMembers();
+        startClock();           // Start the digital clock
+        loadCategories();       // Load all category objects into cboxCategory
+        loadMembers();          // Load all member objects into cboxSelectMember
 
+        // Set listener for category selection to dynamically load books
         cboxCategory.setOnAction(e -> {
-            String category = cboxCategory.getValue();
-            if (category != null) {
-                loadBooksByCategory(category);
+            Category selected = cboxCategory.getValue();  // Get selected Category object
+            if (selected != null) {
+                loadBooksByCategory(selected.getCategoryId()); // Load books by category ID
             }
         });
-        datePickerIssueDate.setValue(LocalDate.now()); //------Default (Current Date)
+
+        datePickerIssueDate.setValue(LocalDate.now()); // Set today's date as default
     }
+
 
     //------------Start Clock-------------
     private void startClock() {
@@ -158,9 +165,9 @@ public class IssueBookFormController {
     }
 
     //------------Load Books By Category-------------
-    private void loadBooksByCategory(String category) {
+    private void loadBooksByCategory(String categoryId) {
         try {
-            cboxBook.getItems().setAll(bookDAO.getBooksByCategory(category));
+            cboxBook.getItems().setAll(bookDAO.getBooksByCategory(categoryId));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -183,4 +190,6 @@ public class IssueBookFormController {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+
 }

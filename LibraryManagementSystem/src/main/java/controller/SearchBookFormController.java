@@ -3,67 +3,134 @@ package controller;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import dao.BookDAO;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
 import model.Book;
+import model.BookTM;
+import util.DBConnection;
 import util.NavigationUtil;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 public class SearchBookFormController {
 
     @FXML
-    private JFXButton btnBack;
+    private JFXComboBox<String> cmbSearchBy;
 
     @FXML
-    private JFXButton btnClear;
+    private TextField txtSearch;
 
     @FXML
     private JFXButton btnSearchBooks;
 
     @FXML
-    private JFXComboBox<String> cmbSearchBy;
+    private TableView<BookTM> tblSearchResults;
 
     @FXML
-    private Label lblAuthor;
+    private TableColumn<BookTM, String> colIsbn;
 
     @FXML
-    private Label lblAuthorView;
+    private TableColumn<BookTM, String> colTitle;
 
     @FXML
-    private Label lblCategory;
+    private TableColumn<BookTM, String> colAuthor;
 
     @FXML
-    private Label lblCategoryView;
+    private TableColumn<BookTM, String> colCategory;
 
     @FXML
-    private Label lblCopies;
+    private TableColumn<BookTM, Integer> colCopies;
 
     @FXML
-    private Label lblCopiesView;
+    private JFXButton btnClear;
 
     @FXML
-    private Label lblIsbn;
+    private JFXButton btnBack;
+
+    private ObservableList<BookTM> bookList = FXCollections.observableArrayList();
+
+    public void initialize() {
+        cmbSearchBy.setItems(FXCollections.observableArrayList("ISBN", "Title", "Category"));
+        colIsbn.setCellValueFactory(data -> data.getValue().isbnProperty());
+        colTitle.setCellValueFactory(data -> data.getValue().titleProperty());
+        colAuthor.setCellValueFactory(data -> data.getValue().authorProperty());
+        colCategory.setCellValueFactory(data -> data.getValue().categoryProperty());
+        colCopies.setCellValueFactory(data -> data.getValue().copiesProperty().asObject());
+    }
 
     @FXML
-    private Label lblIsbnView;
+    void btnSearchOnAction(ActionEvent event) {
+        String criteria = cmbSearchBy.getValue();
+        String searchText = txtSearch.getText().trim();
+
+        if (criteria == null || searchText.isEmpty()) {
+            new Alert(Alert.AlertType.WARNING, "Please select a search type and enter a value!").show();
+            return;
+        }
+
+        searchBooks(criteria, searchText);
+    }
+
+    private void searchBooks(String criteria, String value) {
+        bookList.clear();
+
+        String column;
+        if ("ISBN".equals(criteria)) {
+            column = "b.isbn";
+        } else if ("Title".equals(criteria)) {
+            column = "b.title";
+        } else if ("Category".equals(criteria)) {
+            column = "c.name";
+        } else {
+            return;
+        }
+
+        String query = "SELECT b.book_id, b.isbn, b.title, a.name AS author, c.name AS category, b.available_quantity " +
+                "FROM books b " +
+                "JOIN authors a ON b.author_id = a.author_id " +
+                "JOIN categories c ON b.category_id = c.category_id " +
+                "WHERE b.available_quantity > 0 AND " + column + " LIKE ?";
+
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement pst = con.prepareStatement(query)) {
+
+            pst.setString(1, "%" + value + "%");
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                bookList.add(new BookTM(
+                        rs.getString("isbn"),
+                        rs.getString("title"),
+                        rs.getString("author"),
+                        rs.getString("category"),
+                        rs.getInt("available_quantity")
+                ));
+            }
+
+            tblSearchResults.setItems(bookList);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Error occurred while searching books.").show();
+        }
+    }
 
     @FXML
-    private Label lblSearchBy;
-
-    @FXML
-    private Label lblTitle;
-
-    @FXML
-    private Label lblTitleView;
-
-    @FXML
-    private TextField txtSearch;
-
-    private final ContextMenu suggestionsMenu = new ContextMenu();
+    void btnClearOnAction(ActionEvent event) {
+        txtSearch.clear();
+        cmbSearchBy.getSelectionModel().clearSelection();
+        tblSearchResults.getItems().clear();
+    }
 
     @FXML
     void btnBackOnAction(ActionEvent event) {
@@ -72,92 +139,5 @@ public class SearchBookFormController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @FXML
-    void btnClearOnAction(ActionEvent event) {
-        txtSearch.clear();
-        lblIsbnView.setText("");
-        lblTitleView.setText("");
-        lblAuthorView.setText("");
-        lblCategoryView.setText("");
-        lblCopiesView.setText("");
-        cmbSearchBy.getSelectionModel().clearSelection();
-        suggestionsMenu.hide();
-    }
-
-    @FXML
-    void btnSearchOnAction(ActionEvent event) {
-        // ------Get search criteria
-        String searchType = cmbSearchBy.getValue();
-        String searchText = txtSearch.getText();
-
-        if (searchType == null || searchText == null || searchText.trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Please select search criteria and enter a search text . . .");
-            return;
-        }
-
-        // -------Retrieve book details from DB
-        Book book = BookDAO.searchBook(searchType, searchText.trim());
-
-        if (book == null) {
-
-            showAlert(Alert.AlertType.INFORMATION, "Book not found . . .");
-
-            lblIsbnView.setText("");
-            lblTitleView.setText("");
-            lblAuthorView.setText("");
-            lblCategoryView.setText("");
-            lblCopiesView.setText("");
-
-            return;
-        }
-
-        lblIsbnView.setText(book.getIsbn());
-        lblTitleView.setText(book.getTitle());
-        lblAuthorView.setText(book.getAuthor());
-        lblCategoryView.setText(book.getCategory());
-        lblCopiesView.setText(String.valueOf(book.getCopies()));
-    }
-
-
-
-    // ------------Initialize------------
-    public void initialize() {
-        cmbSearchBy.getItems().addAll("ISBN", "Title");
-
-        txtSearch.textProperty().addListener((obs, oldText, newText) -> {
-            if (newText.length() >= 3) {
-                String searchType = cmbSearchBy.getValue();
-                if (searchType != null) {
-                    List<String> suggestions = BookDAO.getSuggestions(searchType, newText);
-                    showAutoSuggestions(suggestions);
-                }
-            } else {
-                suggestionsMenu.hide();
-            }
-        });
-    }
-
-    private void showAutoSuggestions(List<String> suggestions) {
-        suggestionsMenu.getItems().clear();
-        for (String suggestion : suggestions) {
-            MenuItem item = new MenuItem(suggestion);
-            item.setOnAction(e -> txtSearch.setText(suggestion));
-            suggestionsMenu.getItems().add(item);
-        }
-
-        if (!suggestionsMenu.isShowing()) {
-            suggestionsMenu.show(txtSearch, Side.BOTTOM, 0, 0);
-        }
-    }
-
-    // ------------Show Alert------------
-    private void showAlert(Alert.AlertType type, String msg) {
-        Alert alert = new Alert(type);
-        alert.setTitle("Library System");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
     }
 }

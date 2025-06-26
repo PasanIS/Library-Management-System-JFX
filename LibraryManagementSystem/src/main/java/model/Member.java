@@ -13,14 +13,20 @@ import java.time.LocalDateTime;
 public class Member {
 
     private String memberId;
-    private String name;
-    private Contact contact;
+    private String fullName;
+    private String contact;
     private String nic;
+    private String email;
+    private String address;
     private LocalDate registeredDate;
+
+    public Member(String memberId, String fullName, String contact, String nic, LocalDate registeredDate) {
+    }
+
 
     @Override
     public String toString() {
-        return name;  // Show only member name in ComboBox
+        return fullName;  // Show only member name in ComboBox
     }
 
 }
