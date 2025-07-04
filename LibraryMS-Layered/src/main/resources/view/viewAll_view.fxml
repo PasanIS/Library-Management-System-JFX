@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="500" prefWidth="800" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1"
+            fx:controller="controller.ViewAllMembersFormController">
+    <TableView fx:id="tblMembers" layoutX="20.0" layoutY="103.0" prefHeight="337.0" prefWidth="760">
+        <columns>
+            <TableColumn fx:id="colId" prefWidth="100" text="Member ID"/>
+            <TableColumn fx:id="colName" prefWidth="150" text="Full Name"/>
+            <TableColumn fx:id="colContact" prefWidth="100" text="Contact"/>
+            <TableColumn fx:id="colNIC" prefWidth="100" text="NIC"/>
+            <TableColumn fx:id="colEmail" prefWidth="150" text="Email"/>
+            <TableColumn fx:id="colAddress" prefWidth="150" text="Address"/>
+            <TableColumn fx:id="colDate" prefWidth="120" text="Registered Date"/>
+        </columns>
+    </TableView>
+    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="73.0" layoutY="-2.0" strokeType="INSIDE"
+               width="800.0"/>
+    <Label layoutX="174.0" layoutY="5.0" text="All Registered Members">
+        <font>
+            <Font name="System Bold" size="40.0"/>
+        </font>
+    </Label>
+    <JFXButton fx:id="btnReload" buttonType="RAISED" layoutX="684.0" layoutY="454.0" onAction="#btnReloadOnAction"
+               prefHeight="31.0" prefWidth="95.0" style="-fx-background-color: #16a085;" text="Reload"/>
+</AnchorPane>
